@@ -1,30 +1,13 @@
-import { REST, Routes } from 'discord.js';
-
+import { Events, Interaction, REST, Routes } from 'discord.js';
 import 'dotenv/config'
 
-const { CLIENT_ID, TOKEN } = process.env;
+import commands from './commands'
+import registerCommands from './lib/registerCommands';
 
+const { TOKEN } = process.env;
 
-const commands = [
-  {
-    name: 'ping',
-    description: 'Replies with Pong!',
-  },
-];
+registerCommands(commands.map(cmd => cmd.data))
 
-const rest = new REST({ version: '10' }).setToken(TOKEN);
-
-(async () => {
-  try {
-    console.log('Started refreshing application (/) commands.');
-
-    await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
-
-    console.log('Successfully reloaded application (/) commands.');
-  } catch (error) {
-    console.error(error);
-  }
-})();
 
 const { Client, GatewayIntentBits } = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -33,11 +16,21 @@ client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
-client.on('interactionCreate', async (interaction: any) => {
-  if (!interaction.isChatInputCommand()) return;
+client.on(Events.InteractionCreate, async (interaction: Interaction) => {
+  if (!interaction.isChatInputCommand()) return;  
 
-  if (interaction.commandName === 'ping') {
-    await interaction.reply('Pong!');
+  const command = commands.get(interaction.commandName);
+
+  if (!command) {
+    console.error(`No command matching ${interaction.commandName} was found.`);
+    return;
+  }
+
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error(error);
+    await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
   }
 });
 
