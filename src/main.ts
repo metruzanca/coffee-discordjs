@@ -1,19 +1,15 @@
-import { Events, Interaction, REST, Routes } from 'discord.js';
+import { Events, Interaction, Client, GatewayIntentBits } from 'discord.js';
 import 'dotenv/config'
 
 import commands from './commands'
 import registerCommands from './lib/registerCommands';
 
-const { TOKEN } = process.env;
-
 registerCommands(commands.map(cmd => cmd.data))
 
-
-const { Client, GatewayIntentBits } = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.on('ready', () => {
-  console.log(`Logged in as ${client.user.tag}!`);
+  console.log(`Logged in as ${client.user?.tag}!`);
 });
 
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
@@ -34,4 +30,4 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
   }
 });
 
-client.login(TOKEN);
+client.login(process.env.TOKEN);
